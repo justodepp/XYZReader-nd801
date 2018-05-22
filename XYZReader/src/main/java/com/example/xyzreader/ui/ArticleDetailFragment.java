@@ -4,11 +4,8 @@ import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.Intent;
 import android.content.Loader;
-import android.content.res.Configuration;
 import android.database.Cursor;
-import android.graphics.Color;
 import android.graphics.Typeface;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
@@ -19,6 +16,7 @@ import android.text.Html;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -49,16 +47,9 @@ public class ArticleDetailFragment extends Fragment implements
     private long mItemId;
     private View mRootView;
     private int mMutedColor = 0xFF333333;
-    private ObservableScrollView mScrollView;
-    private DrawInsetsFrameLayout mDrawInsetsFrameLayout;
-    private ColorDrawable mStatusBarColorDrawable;
 
-    private int mTopInset;
-    private View mPhotoContainerView;
     private ImageView mPhotoView;
-    private int mScrollY;
     private boolean mIsCard = false;
-    private int mStatusBarFullOpacityBottom;
 
     private Toolbar toolbar;
     private CollapsingToolbarLayout collapsingToolbar;
@@ -68,7 +59,7 @@ public class ArticleDetailFragment extends Fragment implements
     // Use default locale format
     private SimpleDateFormat outputFormat = new SimpleDateFormat();
     // Most time functions can only handle 1902 - 2037
-    private GregorianCalendar START_OF_EPOCH = new GregorianCalendar(2,1,1);
+    private GregorianCalendar START_OF_EPOCH = new GregorianCalendar(2, 1, 1);
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -94,8 +85,7 @@ public class ArticleDetailFragment extends Fragment implements
         }
 
         mIsCard = getResources().getBoolean(R.bool.detail_is_card);
-        mStatusBarFullOpacityBottom = getResources().getDimensionPixelSize(
-                R.dimen.detail_card_top_margin);
+        //mStatusBarFullOpacityBottom = getResources().getDimensionPixelSize(R.dimen.detail_card_top_margin);
         setHasOptionsMenu(true);
     }
 
@@ -116,12 +106,12 @@ public class ArticleDetailFragment extends Fragment implements
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
+                             Bundle savedInstanceState) {
         mRootView = inflater.inflate(R.layout.fragment_article_detail, container, false);
 
         toolbar = mRootView.findViewById(R.id.toolbar);
-        ((AppCompatActivity)getActivity()).setSupportActionBar(toolbar);
-        ((AppCompatActivity)getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getActivityCast().setSupportActionBar(toolbar);
+        getActivityCast().getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         collapsingToolbar = mRootView.findViewById(R.id.collapsing_toolbar);
         appBarLayout = mRootView.findViewById(R.id.appbar);
@@ -139,37 +129,7 @@ public class ArticleDetailFragment extends Fragment implements
         });
 
         bindViews();
-        //updateStatusBar();
         return mRootView;
-    }
-
-    private void updateStatusBar() {
-        int color = 0;
-        if (mPhotoView != null && mTopInset != 0 && mScrollY > 0) {
-            float f = progress(mScrollY,
-                    mStatusBarFullOpacityBottom - mTopInset * 3,
-                    mStatusBarFullOpacityBottom - mTopInset);
-            color = Color.argb((int) (255 * f),
-                    (int) (Color.red(mMutedColor) * 0.9),
-                    (int) (Color.green(mMutedColor) * 0.9),
-                    (int) (Color.blue(mMutedColor) * 0.9));
-        }
-        mStatusBarColorDrawable.setColor(color);
-        mDrawInsetsFrameLayout.setInsetBackground(mStatusBarColorDrawable);
-    }
-
-    static float progress(float v, float min, float max) {
-        return constrain((v - min) / (max - min), 0, 1);
-    }
-
-    static float constrain(float val, float min, float max) {
-        if (val < min) {
-            return min;
-        } else if (val > max) {
-            return max;
-        } else {
-            return val;
-        }
     }
 
     private Date parsePublishedDate() {
@@ -183,41 +143,23 @@ public class ArticleDetailFragment extends Fragment implements
         }
     }
 
-    private void setSubtitle(){
+    private void setSubtitle(TextView articleDate) {
         Date publishedDate = parsePublishedDate();
         if (!publishedDate.before(START_OF_EPOCH.getTime())) {
-            if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                toolbar.setSubtitle(Html.fromHtml(
-                        DateUtils.getRelativeTimeSpanString(
-                                publishedDate.getTime(),
-                                System.currentTimeMillis(), DateUtils.HOUR_IN_MILLIS,
-                                DateUtils.FORMAT_ABBREV_ALL).toString()
-                                + " by <font color='#ffffff'>"
-                                + mCursor.getString(ArticleLoader.Query.AUTHOR)
-                                + "</font>"));
-            } else if (collapsingToolbar != null)
-                toolbar.setSubtitle(Html.fromHtml(
-                        DateUtils.getRelativeTimeSpanString(
-                                publishedDate.getTime(),
-                                System.currentTimeMillis(), DateUtils.HOUR_IN_MILLIS,
-                                DateUtils.FORMAT_ABBREV_ALL).toString()
-                                + " by <font color='#ffffff'>"
-                                + mCursor.getString(ArticleLoader.Query.AUTHOR)
-                                + "</font>"));
+            articleDate.setText(Html.fromHtml(
+                    DateUtils.getRelativeTimeSpanString(
+                            publishedDate.getTime(),
+                            System.currentTimeMillis(), DateUtils.HOUR_IN_MILLIS,
+                            DateUtils.FORMAT_ABBREV_ALL).toString()
+                            + " by <font color='#8a000000'><b>"
+                            + mCursor.getString(ArticleLoader.Query.AUTHOR)
+                            + "</b></font>"));
 
         } else {
-            // If date is before 1902, just show the string
-            if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                toolbar.setSubtitle(Html.fromHtml(
-                        outputFormat.format(publishedDate) + " by <font color='#ffffff'>"
-                                + mCursor.getString(ArticleLoader.Query.AUTHOR)
-                                + "</font>"));
-            } else if (collapsingToolbar != null)
-                toolbar.setSubtitle(Html.fromHtml(
-                        outputFormat.format(publishedDate) + " by <font color='#ffffff'>"
-                                + mCursor.getString(ArticleLoader.Query.AUTHOR)
-                                + "</font>"));
-
+            articleDate.setText(Html.fromHtml(
+                    outputFormat.format(publishedDate) + " by <font color='#8a000000'><b>"
+                            + mCursor.getString(ArticleLoader.Query.AUTHOR)
+                            + "</b></font>"));
         }
     }
 
@@ -227,13 +169,14 @@ public class ArticleDetailFragment extends Fragment implements
         }
 
         TextView bodyView = (TextView) mRootView.findViewById(R.id.article_body);
-
-
         bodyView.setTypeface(Typeface.createFromAsset(getResources().getAssets(), "Rosario-Regular.ttf"));
+
+        TextView articleDate = (TextView) mRootView.findViewById(R.id.article_date);
+        articleDate.setTypeface(Typeface.createFromAsset(getResources().getAssets(), "Rosario-Regular.ttf"));
 
         if (mCursor != null) {
             mRootView.setVisibility(View.VISIBLE);
-            ((AppCompatActivity)getActivity()).getSupportActionBar().setSubtitle("AAAAA");
+            ((AppCompatActivity) getActivity()).getSupportActionBar().setSubtitle("AAAAA");
             collapsingToolbar.setTitle(mCursor.getString(ArticleLoader.Query.TITLE));
             appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
                 boolean isShow = false;
@@ -251,33 +194,13 @@ public class ArticleDetailFragment extends Fragment implements
                         isShow = true;
                     } else if (isShow) {
                         collapsingToolbar.setTitle(mCursor.getString(ArticleLoader.Query.TITLE));
-                        setSubtitle();
                         mPhotoView.setAlpha(1f);
                         isShow = false;
                     }
                 }
             });
+            setSubtitle(articleDate);
             bodyView.setText(Html.fromHtml(mCursor.getString(ArticleLoader.Query.BODY).replaceAll("(\r\n|\n)", "<br />")));
-            /*ImageLoaderHelper.getInstance(getActivity()).getImageLoader()
-                    .get(mCursor.getString(ArticleLoader.Query.PHOTO_URL), new ImageLoader.ImageListener() {
-                        @Override
-                        public void onResponse(ImageLoader.ImageContainer imageContainer, boolean b) {
-                            Bitmap bitmap = imageContainer.getBitmap();
-                            if (bitmap != null) {
-                                Palette p = Palette.generate(bitmap, 12);
-                                mMutedColor = p.getDarkMutedColor(0xFF333333);
-                                mPhotoView.setImageBitmap(imageContainer.getBitmap());
-                                mRootView.findViewById(R.id.meta_bar)
-                                        .setBackgroundColor(mMutedColor);
-                                //updateStatusBar();
-                            }
-                        }
-
-                        @Override
-                        public void onErrorResponse(VolleyError volleyError) {
-
-                        }
-                    });*/
             String url = mCursor.getString(ArticleLoader.Query.THUMB_URL);
             Glide.with(getActivityCast())
                     .load(url)
@@ -285,12 +208,20 @@ public class ArticleDetailFragment extends Fragment implements
         } else {
             mRootView.setVisibility(View.GONE);
             if (collapsingToolbar != null) {
-                toolbar.setTitle("N/A");
                 collapsingToolbar.setTitle("N/A");
-                toolbar.setSubtitle("N/A");
             }
             bodyView.setText("N/A");
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                getActivity().finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -321,16 +252,5 @@ public class ArticleDetailFragment extends Fragment implements
     public void onLoaderReset(Loader<Cursor> cursorLoader) {
         mCursor = null;
         bindViews();
-    }
-
-    public int getUpButtonFloor() {
-        if (mPhotoContainerView == null || mPhotoView.getHeight() == 0) {
-            return Integer.MAX_VALUE;
-        }
-
-        // account for parallax
-        return mIsCard
-                ? (int) mPhotoContainerView.getTranslationY() + mPhotoView.getHeight() - mScrollY
-                : mPhotoView.getHeight() - mScrollY;
     }
 }
