@@ -6,6 +6,7 @@
     android:layout_marginRight="4dp"
     android:layout_marginTop="4dp"
     android:layout_marginBottom="4dp"
+    android:animateLayoutChanges="true"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?selectableItemBackground">
@@ -27,8 +28,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:adjustViewBounds="true"
-            android:background="@color/photo_placeholder"
-            android:scaleType="centerCrop" />
+            android:background="@color/photo_placeholder" />
 
         <TextView
             android:id="@+id/article_title"
@@ -40,6 +40,7 @@
             android:paddingRight="16dp"
             android:paddingBottom="4dp"
             android:textColor="#6000"
+            android:textStyle="bold"
             android:ellipsize="end"
             android:maxLines="4" />
 
